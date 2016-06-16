@@ -7,6 +7,28 @@ import (
 	"net/http"
 )
 
+type getVMer interface {
+	getNewestVMs(string) ([]string, error)
+}
+
+type githubGetVMer struct{}
+
+func (vm githubGetVMer) GetNewestVMs(url string) ([]string, error) {
+	var m []string
+	r, err := http.Get(url)
+	rawData, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(rawData, &m)
+	return m, err
+}
+
+func slicePrinter(slice []string) {
+	fmt.Printf("%v", len(slice))
+	for _, ip := range slice {
+		fmt.Printf("\t%v\n", ip)
+	}
+}
+
 func panicError(err error) {
 	if err != nil {
 		panic(err.Error())
@@ -15,16 +37,10 @@ func panicError(err error) {
 
 func main() {
 	fmt.Println("List of virtual machines")
-	var m []string
-
-	r, err := http.Get("https://app.rainforestqa.com:443/api/1/vm_stack.json")
-	rawData, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal(rawData, m)
-	for _, ip := range m {
-		fmt.Printf("\t%v\n", ip)
-	}
-
-	//dec := json.NewDecoder(r.Body)
-	defer r.Body.Close()
+	vm := githubGetVMer{}
+	msg, err := vm.GetNewestVMs("https://app.rainforestqa.com:443/api/1/vm_stack.json")
+	print("we good?")
 	panicError(err)
+	slicePrinter(msg)
+	//dec := json.NewDecoder(r.Body)
 }

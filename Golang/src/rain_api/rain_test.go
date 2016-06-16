@@ -1,24 +1,34 @@
 package main
 
-import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"testing"
-)
+import "testing"
 
-func TestToken(t *testing.T) {
+type FakeGetVMer struct {
+	msg []string
+	err error
+}
 
-	const jsonStream = `[`
+func (f FakeGetVMer) getNewestVMs(url string) ([]string, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.msg, nil
+}
 
-	r, err := http.Get("https://app.rainforestqa.com:443/api/1/vm_stack.json")
-	dec := json.NewDecoder(r.Body)
-	defer r.Body.Close()
-	panicError(err)
-	token := readToken(dec)
-	fmt.Printf("Token type: %T", jsonStream)
-	//ar expected = json.Delim(`[`)
-	if token != jsonStream {
-		t.Error(token)
+func TestVMs(t *testing.T) {
+	f := FakeGetVMer{
+		msg: []string{"localhost:8000"},
+		err: nil,
+	}
+
+	expectedSlice := []string{"localhost:8000"}
+	msg, err := f.getNewestVMs("test string")
+
+	if err != nil {
+		t.Fatalf("Expected err to be nil but it was %s", err)
+	}
+	for i, ip := range msg {
+		if expectedSlice[i] != ip {
+			t.Fatalf("Expected %s but got %s", expectedSlice[i], ip)
+		}
 	}
 }
